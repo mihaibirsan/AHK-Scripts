@@ -1,0 +1,18 @@
+﻿## This is an idea for a script to be implemented in AutoHotKey
+
+main():
+# save a reference to existing input control (keyboard focus)
+# display window with symbols
+# add onSelect hook with key Enter
+# add onCancel hook with key Escape
+
+close():
+# hide window with symbols
+# return keyboard focus to the input control
+
+onSelect():
+# close()
+# insert selected symbol
+
+onCancel():
+# close()
