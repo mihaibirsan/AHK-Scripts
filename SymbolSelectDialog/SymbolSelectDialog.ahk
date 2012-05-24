@@ -27,6 +27,16 @@ Gui, Color, FFFFFF, 0000FF
 Gui, Margin, 0, 0
 Gui, Font, s16, Arial Unicode MS
 
+; Prepare font antialiasing
+; @see http://www.autohotkey.com/community/viewtopic.php?t=41243
+nHeight    := 28  ; font size
+fnWeight   := 400 ; FW_NORMAL
+fdwCharSet := 0x1 ; DEFAULT_CHARSET
+lpszFace := "Arial Unicode MS"
+CLEARTYPE_QUALITY := 0x5
+hFont := DllCall( "CreateFont", Int,nHeight, Int,0, Int,0, Int,0, UInt,fnWeight, Int,0
+,Int,0, Int,0, UInt,fdwCharSet, Int,0, Int,0, Int,CLEARTYPE_QUALITY, Int,0, Str,lpszFace )
+
 ; Setup permanent GUI elements
 Gui, Add, Edit, -Theme -E0x200 +Background x0 y0 w%GRID_WIDTH% h%GRID_HEIGHT% vSelectionBox, 
 ; TODO: Add filtering edit field
@@ -41,7 +51,9 @@ Loop %STATIC_GRID_COLUMNS%
     {
         Row := A_Index-1
         Positioning := "x" . (GRID_WIDTH*Column) . " y" . (GRID_HEIGHT*Row) . " w" . (GRID_WIDTH+1) . " h" . (GRID_HEIGHT+1)
-        Gui, Add, Text, %Positioning% vC%Column%R%Row% +Border +Center +BackgroundTrans, 
+        Gui, Add, Text, %Positioning% vC%Column%R%Row% hwndHC%Column%R%Row% +Border +Center +BackgroundTrans, 
+        CurrentControlHwnd := HC%Column%R%Row%
+        SendMessage, 0x30, hFont, 1,, ahk_id %CurrentControlHwnd%
     }
 }
 
