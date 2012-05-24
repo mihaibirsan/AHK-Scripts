@@ -3,6 +3,10 @@
 #NoTrayIcon
 
 ; TODO: Enable searching through the symbols with the key "/" and using the descriptions in the CSV file
+; TODO: When not filtered, the symbols should be sorted by "most used" on the first row and "pinned" on the second row; no other rows should be displayed
+; TODO: Show the window near the cursor on the screen, if any, or centered otherwise
+; TODO: Close the window if the originally focused control loses focus
+; MAYBE: Add a display mode in which the names of the symbols are displayed
 ; MAYBE: Try to display dialog using the font of the focused control
 
 ; Grid configuration options
