@@ -2,7 +2,6 @@
 #SingleInstance force
 #NoTrayIcon
 
-; TODO: Enable searching through the symbols with the key "/" and using the descriptions in the CSV file
 ; TODO: When not filtered, the symbols should be sorted by "most used" on the first row and "pinned" on the second row; no other rows should be displayed
 ; TODO: Show the window near the cursor on the screen, if any, or centered otherwise
 ; TODO: Close the window if the originally focused control loses focus
@@ -38,8 +37,7 @@ hFont := DllCall( "CreateFont", Int,nHeight, Int,0, Int,0, Int,0, UInt,fnWeight,
 ,Int,0, Int,0, UInt,fdwCharSet, Int,0, Int,0, Int,CLEARTYPE_QUALITY, Int,0, Str,lpszFace )
 
 ; Setup permanent GUI elements
-Gui, Add, Edit, -Theme -E0x200 +Background x0 y0 w%GRID_WIDTH% h%GRID_HEIGHT% vSelectionBox, 
-; TODO: Add filtering edit field
+Gui, Add, Edit, -Theme -E0x200 +Background x0 y%GRID_HEIGHT% w%GRID_WIDTH% h%GRID_HEIGHT% vSelectionBox, 
 ; TODO: Add "No symbols match your filter" text field
 
 ; Setup a static grid of blanks onto which a dynamic grid of symbols will be drawn
@@ -50,7 +48,7 @@ Loop %STATIC_GRID_COLUMNS%
     Loop %STATIC_GRID_ROWS%
     {
         Row := A_Index-1
-        Positioning := "x" . (GRID_WIDTH*Column) . " y" . (GRID_HEIGHT*Row) . " w" . (GRID_WIDTH+1) . " h" . (GRID_HEIGHT+1)
+        Positioning := "x" . (GRID_WIDTH*Column) . " y" . (GRID_HEIGHT*Row+GRID_HEIGHT) . " w" . (GRID_WIDTH+1) . " h" . (GRID_HEIGHT+1)
         Gui, Add, Text, %Positioning% vC%Column%R%Row% hwndHC%Column%R%Row% +Border +Center +BackgroundTrans, 
         CurrentControlHwnd := HC%Column%R%Row%
         SendMessage, 0x30, hFont, 1,, ahk_id %CurrentControlHwnd%
@@ -61,6 +59,10 @@ Loop %STATIC_GRID_COLUMNS%
 Column := 0
 Row := 0
 GuiControl, +CFFFFFF, C0R0
+
+; Setup Edit Field
+WINDOW_WIDTH := GRID_WIDTH*STATIC_GRID_COLUMNS
+Gui, Add, Edit, -Background x0 y0 w%WINDOW_WIDTH% h%GRID_HEIGHT% vEditField gEditFieldUpdated
 
 ; Read symbols data
 SymbolsCount = 0 ; VARDEFINE: The number of items in the Symbols array
@@ -83,16 +85,16 @@ ClearFilter()
 ClearFilter()
 {
     global
-    Filter := ""
-    DrawGridSymbols()
+    ; Empty the EditField and the subroutine will take control
+    GuiControl, , EditField, 
 }
 
 ; Sets the filter to the parameter and draws the symbols
 SetFilter(NewValue)
 {
     global
-    Filter := NewValue
-    DrawGridSymbols()
+    ; Set the EditField and the subroutine will take control
+    GuiControl, , EditField, %NewValue%
 }
 
 ; Draws all the filtered symbols
@@ -149,7 +151,8 @@ SetActiveGridItem(NewColumn, NewRow)
         Row := STATIC_GRID_ROWS-1
 
     GuiControl, +CFFFFFF, C%Column%R%Row%
-    GuiControl, MoveDraw, SelectionBox, % "x" . (GRID_WIDTH*Column) . " y" . (GRID_HEIGHT*Row)
+    ; MAYBE: Pick up the x and y of C%Column%R%Row%
+    GuiControl, MoveDraw, SelectionBox, % "x" . (GRID_WIDTH*Column) . " y" . (GRID_HEIGHT*Row+GRID_HEIGHT)
 }
 
 WindowClose()
@@ -170,10 +173,12 @@ Enter::
     SendUnicode(Label)
 return
 /::
-    global Filter
-    InputValue := "Box" ; TODO: Show input box
-    SetFilter(InputValue)
+    GuiControl, Focus, EditField
+    Gui, Show
 return
+; MAYBE: Re-enable quick searches
+; InputValue := "Box"
+; InputValue := "Dingbat"
 !F4:: WindowClose()
 Escape:: WindowClose()
 ^!+':: WindowClose()
@@ -198,3 +203,12 @@ SendUnicode( UniSz )
     SendInput, {U+%UniHex%}
 }
 
+;;;;; subroutines ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Following this line only subroutines are defined
+return
+
+; Update the filter whenever the Edit Field is updated
+EditFieldUpdated:
+    GuiControlGet, Filter, , EditField
+    DrawGridSymbols()
+return
