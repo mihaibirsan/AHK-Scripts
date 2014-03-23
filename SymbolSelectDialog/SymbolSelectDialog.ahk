@@ -97,26 +97,40 @@ SetFilter(NewValue)
     GuiControl, , EditField, %NewValue%
 }
 
-; Draws all the filtered symbols
-DrawGridSymbols()
+; Create a separete list of filtered symbols
+ApplyFilter()
 {
     global
     FilteredSymbolsCount := 0
 
-    ; TODO: Allow dynamic scrolling through symbols if there are more then grid spaces
-
-    ; Fill in symbols that match the filter
+    ; Collect symbols that match the filter
     Loop %SymbolsCount%
     {
         If (Filter != "" && (InStr(SymbolsUnicodeName%A_Index%, Filter) == false))
             Continue
 
-        FilteredSymbolColumn := Mod(FilteredSymbolsCount, STATIC_GRID_COLUMNS)
-        FilteredSymbolRow := FilteredSymbolsCount // STATIC_GRID_COLUMNS
-        GuiControl, , C%FilteredSymbolColumn%R%FilteredSymbolRow%, % Symbols%A_Index%
-
         FilteredSymbolsCount += 1
-        If (FilteredSymbolsCount == STATIC_GRID_COLUMNS*STATIC_GRID_ROWS)
+        FilteredSymbolsIndex%FilteredSymbolsCount% := A_Index
+    }
+}
+
+; Draws all the filtered symbols
+DrawGridSymbols()
+{
+    global
+
+    ; TODO: Allow dynamic scrolling through symbols if there are more then grid spaces
+
+    ; Fill in symbols that match the filter
+    Loop %FilteredSymbolsCount%
+    {
+        SymbolIndex := FilteredSymbolsIndex%A_Index%
+
+        FilteredSymbolColumn := Mod(A_Index-1, STATIC_GRID_COLUMNS)
+        FilteredSymbolRow := (A_Index-1) // STATIC_GRID_COLUMNS
+        GuiControl, , C%FilteredSymbolColumn%R%FilteredSymbolRow%, % Symbols%SymbolIndex%
+
+        If (A_Index == STATIC_GRID_COLUMNS*STATIC_GRID_ROWS)
             Break
     }
 
@@ -210,5 +224,6 @@ return
 ; Update the filter whenever the Edit Field is updated
 EditFieldUpdated:
     GuiControlGet, Filter, , EditField
+    ApplyFilter()
     DrawGridSymbols()
 return
